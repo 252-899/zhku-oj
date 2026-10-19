@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.Title}} - API Documentation</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+    <script
+        id="api-reference"
+        data-url="{{.SwaggerURL}}"
+        data-configuration='{
+            "theme": "{{.Theme}}",
+            "layout": "{{.Layout}}",
+            "showSidebar": {{.ShowSidebar}},
+            "hideDownloadButton": {{.HideDownloadButton}},
+            "searchHotKey": "k",
+            "metaData": {
+                "title": "{{.Title}}",
+                "description": "{{.Description}}"
+            }
+        }'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>

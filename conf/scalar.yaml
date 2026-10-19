@@ -1,0 +1,57 @@
+# Scalar API 文档配置
+scalar:
+  # 基本信息
+  title: "ZK Code Arena API"
+  description: "在线编程竞赛平台 API 文档 - 支持题目管理、用户认证、实时判题等功能"
+  
+  # Swagger JSON 路径
+  swagger_url: "/swagger/doc.json"
+  
+  # 主题设置
+  theme: "auto"  # light, dark, auto
+  
+  # 布局设置
+  layout: "modern"  # modern, classic
+  
+  # 功能开关
+  show_sidebar: true
+  hide_download_button: false
+  hide_models: false
+  hide_authentication: false
+  hide_test_request_button: false
+  
+  # 搜索快捷键
+  search_hot_key: "k"
+  
+  # 自定义样式
+  custom_css: |
+    .scalar-app {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+    .scalar-app .sidebar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .scalar-app .method-get {
+      background: #10b981;
+    }
+    .scalar-app .method-post {
+      background: #3b82f6;
+    }
+    .scalar-app .method-put {
+      background: #f59e0b;
+    }
+    .scalar-app .method-delete {
+      background: #ef4444;
+    }
+  
+  # 品牌设置
+  branding:
+    logo_url: ""
+    favicon_url: ""
+    
+  # 服务器列表
+  servers:
+    - url: "http://localhost:8080"
+      description: "开发环境"
+    - url: "https://api.zkcodearena.com"
+      description: "生产环境"

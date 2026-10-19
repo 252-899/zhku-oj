@@ -1,0 +1,96 @@
+# 部署配置：真实 API 密钥由环境变量注入，避免随代码发布。
+version: '3.8'
+
+services:
+  # 主应用服务
+  app:
+    build: .
+    container_name: zk-code-arena-server
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./logs:/app/logs
+      - ./conf:/app/conf
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - APP_ENV=production
+      - AI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+      - AI_API_KEY=${AI_API_KEY:-}
+      - AI_MODEL=qwen-plus
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+    networks:
+      - zk-arena-network
+
+  # MongoDB 数据库
+  mongo:
+    image: mongo:7.0
+    container_name: zk-arena-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db
+      - ./deploy/mongo/init:/docker-entrypoint-initdb.d
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=zk_code_arena
+    restart: unless-stopped
+    networks:
+      - zk-arena-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7.2-alpine
+    container_name: zk-arena-redis
+    ports:
+      - "6378:6379"
+    volumes:
+      - ./data/redis:/data
+    command: redis-server --appendonly yes --requirepass redis123
+    restart: unless-stopped
+    networks:
+      - zk-arena-network
+
+  # 代码评测服务 (go-judge)
+  judge:
+    image: zhku-oj-judge:multilang
+    container_name: zk-arena-judge
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./data/judge:/judge
+    environment:
+      - JUDGE_DEBUG=1
+    restart: unless-stopped
+    networks:
+      - zk-arena-network
+    privileged: true
+
+  # Nginx 反向代理 (可选)
+  nginx:
+    image: nginx:alpine
+    container_name: zk-arena-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - zk-arena-network
+
+# volumes: 
+# 使用主机目录挂载，不需要命名卷定义
+
+networks:
+  zk-arena-network:
+    driver: bridge

@@ -1,0 +1,89 @@
+# 部署配置：真实 API 密钥由环境变量注入，避免随代码发布。
+version: '3.8'
+
+services:
+  # 开发环境应用服务
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: zk-code-arena-server-dev
+    ports:
+      - "8082:8080"
+    volumes:
+      - app_logs:/app/logs
+      - /home/zheng3/workspace/oj_project/oj_project_dev/data/uploads:/app/data/uploads
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - APP_ENV=development
+      - UPLOAD_DIR=/app/data/uploads
+      # 可选：课程文件下载 X-Accel-Redirect。本 compose 无 nginx，需在「反代到本 app 的那台 nginx」上配
+      # internal + alias，且 alias 物理路径 = 宿主机 ./data/uploads（与上方 volumes 挂载一致）。
+      - COURSE_FILE_X_ACCEL_PREFIX=/internal/course-files
+      # ========== AI 配置 ==========
+      - DEEPSEEK_ENABLE=true
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_BASE_URL=https://api.deepseek.com
+      - DEEPSEEK_MODEL=deepseek-chat
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+    networks:
+      - zk-arena-dev-network
+      - oj-shared-network
+
+  # MongoDB 数据库
+  mongo:
+    image: mongo:7.0
+    container_name: zk-arena-mongo-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - /home/zheng3/workspace/oj_project/oj_project_dev/data/mongo:/data/db
+      - ./deploy/mongo/init:/docker-entrypoint-initdb.d
+    environment:
+      - MONGO_INITDB_DATABASE=zk_code_arena
+    restart: unless-stopped
+    networks:
+      - zk-arena-dev-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7.2-alpine
+    container_name: zk-arena-redis-dev
+    ports:
+      - "6378:6379"
+    volumes:
+      - /home/zheng3/workspace/oj_project/oj_project_dev/data/redis:/data
+    command: redis-server --appendonly yes --requirepass redis123
+    restart: unless-stopped
+    networks:
+      - zk-arena-dev-network
+
+  # 判题服务（go-judge）。
+  judge:
+    image: zhku-oj-judge:multilang
+    container_name: zk-arena-judge-dev
+    ports:
+      - "5050:5050"
+    volumes:
+      - /home/zheng3/workspace/oj_project/oj_project_dev/data/judge:/judge
+    environment:
+      - JUDGE_DEBUG=1
+    restart: unless-stopped
+    networks:
+      - zk-arena-dev-network
+    privileged: true
+
+volumes:
+  app_logs:
+    driver: local
+
+networks:
+  zk-arena-dev-network:
+    driver: bridge
+  oj-shared-network:  # 新增：声明外部共享网络（已存在）
+    external: true

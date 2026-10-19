@@ -1,0 +1,110 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Air temporary files
+tmp/
+build-errors.log
+
+# Log files
+logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker volumes
+docker-data/
+data/
+
+# Configuration files with sensitive data
+config.local.yaml
+config.production.yaml
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+
+# Documentation generated files
+# docs/  # 注释掉这一行，确保Swagger文档被包含
+
+# Cursor IDE files
+.cursor/
+
+.codex
+
+
+.claude
+
+.cursor
+
+doc-omenkk/
+
+
+
+
+temp/
+
+docs/omenkk-ai/
+
+.worktrees/
+
+.codex-cache/
+
+
+
+
+
+
+# 私钥、编译缓存和部署镜像不应随源码发布。
+/id_rsa
+/id_rsa.pub
+/.gocache/
+/.gocache_test/
+/zhku-oj-judge-multilang.tar
+/deploy/judge/go-judge_*.tar.gz
+/main

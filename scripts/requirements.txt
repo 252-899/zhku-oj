@@ -1,0 +1,5 @@
+# ZK Code Arena API 测试脚本依赖
+requests>=2.31.0
+colorama>=0.4.6
+
+

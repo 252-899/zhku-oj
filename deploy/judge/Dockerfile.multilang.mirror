@@ -1,0 +1,37 @@
+# 多语言判题镜像（使用国内阿里云 apt 源）
+# 适用于：服务器访问 archive.ubuntu.com 超时，但能访问 mirrors.aliyun.com 时在服务器上直接构建
+# 使用：docker build -f deploy/judge/Dockerfile.multilang.mirror -t zhku-oj-judge:multilang .
+
+FROM ubuntu:22.04 AS judge-binary
+RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
+    && sed -i 's|http://security.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
+    && apt-get update && apt-get install -y --no-install-recommends ca-certificates wget \
+    && rm -rf /var/lib/apt/lists/*
+ARG GO_JUDGE_VERSION=1.11.3
+ARG GO_JUDGE_ARCH=linux_amd64v2
+RUN wget -q "https://github.com/criyle/go-judge/releases/download/v${GO_JUDGE_VERSION}/go-judge_${GO_JUDGE_VERSION}_${GO_JUDGE_ARCH}.tar.gz" -O /tmp/go-judge.tar.gz \
+    && tar -xzf /tmp/go-judge.tar.gz -C /tmp \
+    && cp /tmp/go-judge_${GO_JUDGE_VERSION}_${GO_JUDGE_ARCH}/go-judge /usr/local/bin/go-judge \
+    && chmod +x /usr/local/bin/go-judge \
+    && rm -rf /tmp/go-judge.tar.gz /tmp/go-judge_*
+
+FROM ubuntu:22.04
+RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
+    && sed -i 's|http://security.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ python3 openjdk-17-jdk golang-go ca-certificates wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3 /usr/bin/python
+
+RUN mkdir -p /etc/java-17-openjdk/security \
+    && wget -q -O /etc/java-17-openjdk/security/java.security \
+       "https://raw.githubusercontent.com/openjdk/jdk/master/src/java.base/share/conf/security/java.security" \
+    && (wget -q -O /etc/java-17-openjdk/security/java.policy \
+        "https://raw.githubusercontent.com/openjdk/jdk/master/src/java.base/share/conf/security/java.policy" 2>/dev/null || echo 'grant {};' > /etc/java-17-openjdk/security/java.policy) \
+    && (cp -r /usr/lib/jvm/java-17-openjdk-amd64/conf/security/policy /etc/java-17-openjdk/security/ 2>/dev/null || mkdir -p /etc/java-17-openjdk/security/policy) \
+    && touch /etc/java-17-openjdk/security/nss.cfg
+
+COPY --from=judge-binary /usr/local/bin/go-judge /usr/local/bin/go-judge
+COPY mount.yaml /etc/go-judge/mount.yaml
+EXPOSE 5050
+CMD ["go-judge", "-mount-conf", "/etc/go-judge/mount.yaml", "-http-addr", "0.0.0.0:5050"]

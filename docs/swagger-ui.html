@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="ZK Code Arena API 文档" />
+    <title>ZK Code Arena API 文档</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js" crossorigin></script>
+<script>
+  // 修正后的API规范
+  const spec = {
+    "swagger": "2.0",
+    "info": {
+      "description": "ZK Code Arena 在线编程平台API文档",
+      "title": "ZK Code Arena API",
+      "version": "1.0",
+      "contact": {}
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "schemes": ["http", "https"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
+    "securityDefinitions": {
+      "BearerAuth": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header",
+        "description": "输入'Bearer ' + JWT Token"
+      }
+    },
+    "paths": {
+      "/clazzes/tasks/{clazzId}": {
+        "get": {
+          "security": [{"BearerAuth": []}],
+          "description": "获取指定班级的任务列表",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "tags": ["班级"],
+          "summary": "获取班级任务列表",
+          "parameters": [
+            {
+              "type": "string",
+              "description": "班级ID",
+              "name": "clazzId",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "任务列表",
+              "schema": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/Task"}
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "schema": {"$ref": "#/definitions/ErrorResponse"}
+            }
+          }
+        }
+      },
+      "/problem": {
+        "get": {
+          "description": "获取题目列表，支持分页、筛选和用户状态",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "tags": ["题目"],
+          "summary": "获取题目列表",
+          "parameters": [
+            {
+              "type": "integer",
+              "default": 1,
+              "description": "页码",
+              "name": "page",
+              "in": "query"
+            },
+            {
+              "type": "integer",
+              "default": 10,
+              "description": "每页数量",
+              "name": "page_size",
+              "in": "query"
+            },
+            {
+              "type": "string",
+              "enum": ["easy", "medium", "hard"],
+              "description": "难度",
+              "name": "difficulty",
+              "in": "query"
+            },
+            {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "标签列表",
+              "name": "tags",
+              "in": "query"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "题目列表",
+              "schema": {"$ref": "#/definitions/ProblemListResponse"}
+            },
+            "400": {
+              "description": "请求参数错误",
+              "schema": {"$ref": "#/definitions/ErrorResponse"}
+            }
+          }
+        }
+      },
+      "/submit": {
+        "post": {
+          "security": [{"BearerAuth": []}],
+          "description": "提交代码进行判题",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "tags": ["提交"],
+          "summary": "提交代码",
+          "parameters": [
+            {
+              "description": "提交信息",
+              "name": "request",
+              "in": "body",
+              "required": true,
+              "schema": {"$ref": "#/definitions/SubmitRequest"}
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "提交成功",
+              "schema": {"$ref": "#/definitions/SubmitResponse"}
+            },
+            "400": {
+              "description": "请求参数错误",
+              "schema": {"$ref": "#/definitions/ErrorResponse"}
+            }
+          }
+        }
+      },
+      "/submit/{userId}": {
+        "get": {
+          "security": [{"BearerAuth": []}],
+          "description": "获取用户的提交记录列表",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "tags": ["提交"],
+          "summary": "获取提交列表",
+          "parameters": [
+            {
+              "type": "string",
+              "description": "用户ID",
+              "name": "userId",
+              "in": "path",
+              "required": true
+            },
+            {
+              "type": "integer",
+              "default": 1,
+              "description": "页码",
+              "name": "page",
+              "in": "query"
+            },
+            {
+              "type": "integer",
+              "default": 10,
+              "description": "每页数量",
+              "name": "page_size",
+              "in": "query"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "提交列表",
+              "schema": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/Submit"}
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "schema": {"$ref": "#/definitions/ErrorResponse"}
+            }
+          }
+        }
+      },
+      "/courses": {
+        "get": {
+          "security": [{"BearerAuth": []}],
+          "description": "获取用户相关的课程列表",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "tags": ["课程"],
+          "summary": "获取课程列表",
+          "responses": {
+            "200": {
+              "description": "课程列表",
+              "schema": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/Course"}
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "schema": {"$ref": "#/definitions/ErrorResponse"}
+            }
+          }
+        }
+      },
+      "/clazzes/{clazzId}": {
+        "get": {
+          "security": [{"BearerAuth": []}],
+          "description": "根据班级ID获取班级详细信息",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "tags": ["班级"],
+          "summary": "获取课程班级详情",
+          "parameters": [
+            {
+              "type": "string",
+              "description": "班级ID",
+              "name": "clazzId",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "班级详情",
+              "schema": {"$ref": "#/definitions/Clazz"}
+            },
+            "400": {
+              "description": "请求参数错误",
+              "schema": {"$ref": "#/definitions/ErrorResponse"}
+            }
+          }
+        }
+      }
+    },
+    "definitions": {
+      "Task": {
+        "type": "object",
+        "required": ["title", "type", "start_time"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "title": {
+            "type": "string",
+            "example": "第1周编程作业"
+          },
+          "description": {
+            "type": "string",
+            "example": "本周需要完成2道编程题目，请认真阅读题目要求并提交代码。"
+          },
+          "type": {
+            "type": "integer",
+            "example": 1,
+            "description": "任务类型：1-题单，2-视频"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-10-26T10:00:00Z"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-11-02T23:59:59Z"
+          },
+          "relation_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "example": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
+          },
+          "status": {
+            "type": "integer",
+            "example": 1,
+            "description": "任务状态：0-未开始，1-进行中，2-已结束"
+          },
+          "finish_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "example": ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
+          },
+          "course_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439015"
+          },
+          "clazz_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439016"
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "required": ["title", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "title": {
+            "type": "string",
+            "example": "两数之和"
+          },
+          "description": {
+            "type": "string",
+            "example": "给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出和为目标值 target 的那两个整数，并返回它们的数组下标。"
+          },
+          "input": {
+            "type": "string",
+            "example": "第一行包含一个整数 n，表示数组长度。第二行包含 n 个整数，表示数组 nums。第三行包含一个整数 target。"
+          },
+          "output": {
+            "type": "string",
+            "example": "输出两个整数，表示和为 target 的两个数的下标（从0开始）。"
+          },
+          "sample_input": {
+            "type": "string",
+            "example": "4\\n2 7 11 15\\n9"
+          },
+          "sample_output": {
+            "type": "string",
+            "example": "0 1"
+          },
+          "hint": {
+            "type": "string",
+            "example": "可以使用哈希表来优化时间复杂度。"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": ["easy", "medium", "hard"],
+            "example": "easy"
+          },
+          "time_limit": {
+            "type": "integer",
+            "example": 1000
+          },
+          "memory_limit": {
+            "type": "integer",
+            "example": 256
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "example": ["数组", "哈希表"]
+          },
+          "ac_count": {
+            "type": "integer",
+            "example": 125
+          },
+          "submit_count": {
+            "type": "integer",
+            "example": 200
+          }
+        }
+      },
+      "Submit": {
+        "type": "object",
+        "required": ["problem_id", "user_id", "code", "language"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "problem_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439012"
+          },
+          "user_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439013"
+          },
+          "code": {
+            "type": "string",
+            "example": "#include <iostream>\\nusing namespace std;\\nint main() {\\n    cout << \"Hello World!\" << endl;\\n    return 0;\\n}"
+          },
+          "language": {
+            "type": "string",
+            "enum": ["c", "cpp", "java", "python", "go"],
+            "example": "cpp"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "running", "accepted", "wrong_answer", "time_limit", "memory_limit", "runtime_error", "compile_error", "system_error"],
+            "example": "accepted"
+          },
+          "result": {
+            "$ref": "#/definitions/JudgeResult"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-10-26T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-10-26T10:00:00Z"
+          }
+        }
+      },
+      "JudgeResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "accepted"
+          },
+          "time_used": {
+            "type": "integer",
+            "example": 126,
+            "description": "时间使用(ms)"
+          },
+          "memory_used": {
+            "type": "integer",
+            "example": 1024,
+            "description": "内存使用(KB)"
+          },
+          "compile_error": {
+            "type": "string",
+            "example": "",
+            "description": "编译错误信息"
+          },
+          "runtime_error": {
+            "type": "string",
+            "example": "",
+            "description": "运行时错误信息"
+          },
+          "test_results": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/TestResult"}
+          }
+        }
+      },
+      "TestResult": {
+        "type": "object",
+        "properties": {
+          "test_case_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439020"
+          },
+          "status": {
+            "type": "string",
+            "example": "accepted"
+          },
+          "time_used": {
+            "type": "integer",
+            "example": 100
+          },
+          "memory_used": {
+            "type": "integer",
+            "example": 512
+          }
+        }
+      },
+      "Course": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "name": {
+            "type": "string",
+            "example": "算法与数据结构"
+          },
+          "avatar": {
+            "type": "string",
+            "example": "https://api.dicebear.com/7.x/shapes/svg?seed=algorithm"
+          },
+          "description": {
+            "type": "string",
+            "example": "本课程主要介绍常用的数据结构和算法，包括线性表、栈、队列、树、图等数据结构"
+          },
+          "teacher_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "example": ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
+          },
+          "created_by": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439014"
+          },
+          "status": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "Clazz": {
+        "type": "object",
+        "required": ["name", "course_id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "name": {
+            "type": "string",
+            "example": "算法与数据结构 - 第1班"
+          },
+          "description": {
+            "type": "string",
+            "example": "算法与数据结构课程的第1个教学班"
+          },
+          "course_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439012"
+          },
+          "schedule": {
+            "type": "string",
+            "example": "周二 14:00-16:00"
+          },
+          "member_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "example": ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
+          },
+          "teacher_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "example": ["507f1f77bcf86cd799439015"]
+          },
+          "require_invite": {
+            "type": "boolean",
+            "example": false
+          },
+          "max_members": {
+            "type": "integer",
+            "example": 50
+          },
+          "add_nums": {
+            "type": "integer",
+            "example": 25
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": ["username", "password", "email"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "username": {
+            "type": "string",
+            "example": "student1"
+          },
+          "email": {
+            "type": "string",
+            "example": "student1@zkcodearena.com"
+          },
+          "real_name": {
+            "type": "string",
+            "example": "王小明"
+          },
+          "student_id": {
+            "type": "string",
+            "example": "20240001"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "teacher", "student", "contest"],
+            "example": "student"
+          },
+          "avatar": {
+            "type": "string",
+            "example": "https://api.dicebear.com/7.x/avataaars/svg?seed=student1"
+          },
+          "bio": {
+            "type": "string",
+            "example": "我是王小明，热爱编程！"
+          },
+          "school": {
+            "type": "string",
+            "example": "xx大学"
+          },
+          "major": {
+            "type": "string",
+            "example": "计算机科学与技术"
+          }
+        }
+      },
+      "ProblemListResponse": {
+        "type": "object",
+        "properties": {
+          "problems": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/Problem"}
+          },
+          "total": {
+            "type": "integer",
+            "example": 100
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "example": 10
+          },
+          "total_page": {
+            "type": "integer",
+            "example": 10
+          }
+        }
+      },
+      "SubmitRequest": {
+        "type": "object",
+        "required": ["problem_id", "code", "language"],
+        "properties": {
+          "problem_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "code": {
+            "type": "string",
+            "example": "#include <iostream>\\nusing namespace std;\\nint main() {\\n    cout << \"Hello World!\" << endl;\\n    return 0;\\n}"
+          },
+          "language": {
+            "type": "string",
+            "enum": ["c", "cpp", "java", "python", "go"],
+            "example": "cpp"
+          }
+        }
+      },
+      "SubmitResponse": {
+        "type": "object", 
+        "properties": {
+          "submit_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439020"
+          },
+          "status": {
+            "type": "string",
+            "example": "pending"
+          },
+          "message": {
+            "type": "string",
+            "example": "代码已提交，正在判题中..."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "请求参数错误"
+          },
+          "message": {
+            "type": "string",
+            "example": "缺少必需的参数"
+          }
+        }
+      }
+    }
+  };
+
+  window.onload = function() {
+    SwaggerUIBundle({
+      url: '',
+      spec: spec,
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIBundle.presets.standalone
+      ],
+      plugins: [
+        SwaggerUIBundle.plugins.DownloadUrl
+      ],
+      layout: "BaseLayout",
+      defaultModelsExpandDepth: 1,
+      defaultModelExpandDepth: 3,
+      docExpansion: 'list',
+      filter: true,
+      showRequestHeaders: true,
+      showCommonExtensions: true,
+      tryItOutEnabled: true
+    });
+  };
+</script>
+</body>
+</html>

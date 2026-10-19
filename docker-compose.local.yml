@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # MongoDB 数据库
+  mongo:
+    image: mongo:7.0
+    container_name: zk-arena-mongo-local
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=zk_code_arena
+    restart: unless-stopped
+
+  # Redis 缓存
+  redis:
+    image: redis:7.2-alpine
+    container_name: zk-arena-redis-local
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    command: redis-server --appendonly yes --requirepass redis123
+    restart: unless-stopped
+
+# 注意：Java 沙箱部署在云服务器 42.194.245.236:5050
+# 本地无需运行沙箱容器

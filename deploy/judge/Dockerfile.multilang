@@ -1,0 +1,53 @@
+# 多语言判题镜像：C / C++ / Java / Python / Go
+# 基于 Ubuntu 安装各语言运行时，并集成 go-judge 二进制
+
+# 阶段1：使用本地文件构建 go-judge 二进制（不再网络下载）
+FROM ubuntu:22.04 AS judge-binary
+# 安装解压工具（tar 是基础工具，这里确保存在）
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tar \
+    && rm -rf /var/lib/apt/lists/*
+
+# 版本参数保持不变（和你下载的文件匹配）
+ARG GO_JUDGE_VERSION=1.11.3
+ARG GO_JUDGE_ARCH=linux_amd64v2
+
+# 本地下载的 tar.gz 文件到镜像中
+COPY go-judge_${GO_JUDGE_VERSION}_${GO_JUDGE_ARCH}.tar.gz /tmp/go-judge.tar.gz
+
+# 解压并安装 go-judge
+RUN tar -xzf /tmp/go-judge.tar.gz -C /tmp \
+    && cp /tmp/go-judge /usr/local/bin/go-judge \
+    && chmod +x /usr/local/bin/go-judge \
+    && rm -rf /tmp/go-judge.tar.gz /tmp/go-judge* /tmp/mount.yaml /tmp/go-judge-*
+
+# 阶段2：完整运行环境
+FROM ubuntu:22.04
+
+# 安装 C / C++ / Python / Java / Go（与 conf/config.yaml 中路径一致）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    python3 \
+    openjdk-17-jdk \
+    golang-go \
+    ca-certificates \
+    wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3 /usr/bin/python
+
+# Java 17：Ubuntu 的 deb 里 conf/security 已是符号链接（指回 /etc），复制后变成自引用无真实内容。
+# 从 OpenJDK 上游下载真实 java.security；缺的 java.policy/nss.cfg 用最小占位
+RUN mkdir -p /etc/java-17-openjdk/security \
+    && wget -q -O /etc/java-17-openjdk/security/java.security \
+       "https://raw.githubusercontent.com/openjdk/jdk/master/src/java.base/share/conf/security/java.security" \
+    && (wget -q -O /etc/java-17-openjdk/security/java.policy \
+        "https://raw.githubusercontent.com/openjdk/jdk/master/src/java.base/share/conf/security/java.policy" 2>/dev/null || echo 'grant {};' > /etc/java-17-openjdk/security/java.policy) \
+    && (cp -r /usr/lib/jvm/java-17-openjdk-amd64/conf/security/policy /etc/java-17-openjdk/security/ 2>/dev/null || mkdir -p /etc/java-17-openjdk/security/policy) \
+    && touch /etc/java-17-openjdk/security/nss.cfg
+
+# 复制 go-judge 与挂载配置（mount 中需绑定 /etc/java-17-openjdk）
+COPY --from=judge-binary /usr/local/bin/go-judge /usr/local/bin/go-judge
+COPY mount.yaml /etc/go-judge/mount.yaml
+
+EXPOSE 5050
+CMD ["go-judge", "-mount-conf", "/etc/go-judge/mount.yaml", "-http-addr", "0.0.0.0:5050"]

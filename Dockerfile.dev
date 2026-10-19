@@ -1,0 +1,38 @@
+FROM golang:1.24-alpine
+
+# 更换apk源为阿里云镜像（解决网络问题）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装必要的工具
+RUN apk update && apk add --no-cache git ca-certificates tzdata wget
+
+# 设置 Go 代理
+RUN go env -w GOPROXY=https://goproxy.cn,direct
+
+# 复制 go mod 文件
+COPY go.mod go.sum ./
+
+# 下载依赖
+RUN go mod download
+
+# 复制源代码
+COPY . .
+
+# 创建必要的目录
+RUN mkdir -p /app/logs
+
+# 安装 swag 工具并生成 Swagger 文档
+RUN go install github.com/swaggo/swag/cmd/swag@latest && \
+    swag init -g cmd/main.go -o docs --parseDependency --parseInternal
+
+# 编译应用
+RUN go build -buildvcs=false -o /app/server ./cmd
+
+# 暴露端口
+EXPOSE 8080
+
+# 直接运行编译后的二进制文件
+CMD ["/app/server", "run"]
